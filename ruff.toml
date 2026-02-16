@@ -1,0 +1,37 @@
+line-length = 120
+output-format = "concise"
+extend-exclude = ["docs"]
+
+[lint]
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Enable Pyflakes `E` and `F` codes by default.
+select = ["ALL"]
+ignore = [
+    "ANN204", # Missing return type annotation for special (dunder) method
+    "FBT",    # Using boolean function arguments
+    "TD",     # TODOs
+    "FIX001", # Resolve FIXMEs
+    "FIX002", # Resolve TODOs
+    "B028",   # No explicit `stacklevel` keyword argument found in warning
+    # No docstrings required in the following cases
+    "D100", # Missing module docstring
+    "D104", # Missing public package docstring
+    "D105", # Missing docstring in magic method
+    "D107", # Missing docstring in `__init__`
+]
+pydocstyle.convention = "google"
+
+[lint.per-file-ignores]
+# Tests can ignore a few extra rules
+"tests/**.py" = [
+    "ANN201", # Missing return type annotation for public function
+    "PT011",  # Missing `match` parameter in `pytest.raises()`
+    "S101",   # Use of assert is detected
+]
+
+[lint.isort]
+known-first-party = ["nl2query"]
+force-single-line = true
+no-lines-before = ["future","standard-library","third-party","first-party","local-folder"]
