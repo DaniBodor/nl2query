@@ -8,9 +8,7 @@ requires = ["setuptools>=64.0.0", "setuptools-scm", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-authors = [
-    { name = "Dani Bodor", email = "dani.bodor@kb.nl" }
-]
+authors = [{ name = "Dani Bodor", email = "dani.bodor@kb.nl" }]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Developers",
@@ -20,18 +18,18 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.13",
 ]
-dependencies = ["requests"]
+dependencies = []
 description = "parse a natural language query to a cql query for delpher"
 keywords = [""]
-license = {file = "LICENSE"}
+license = { file = "LICENSE" }
 name = "nl2query"
-readme = {file = "README.md", content-type = "text/markdown"}
+readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.13"
 version = "0.1.0"
 
 [project.optional-dependencies]
 dev = [
-    "build",  # build is not only used in publishing (below), but also in the template's test suite
+    "build",           # build is not only used in publishing (below), but also in the template's test suite
     "bump-my-version",
     "coverage [toml]",
     "pytest",
@@ -40,11 +38,7 @@ dev = [
     "mypy",
 ]
 docs = []
-publishing = [
-    "build",
-    "twine",
-    "wheel",
-]
+publishing = ["build", "twine", "wheel"]
 
 [project.urls]
 Repository = "https://github.com/DaniBodor/nl2query"
