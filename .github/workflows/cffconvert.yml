@@ -3,14 +3,15 @@ name: cffconvert
 on:
   push:
     branches:
-    - main
+      - main
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches:
-    - main
+      - main
 
 jobs:
-
   verify:
+    if: github.event.pull_request.draft == false
     name: "cffconvert"
     runs-on: ubuntu-latest
     steps:

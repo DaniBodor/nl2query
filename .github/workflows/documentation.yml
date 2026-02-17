@@ -1,12 +1,13 @@
 name: documentation
 
 on:
-  push:
-    branches:
-    - main
-  pull_request:
-    branches:
-    - main
+  workflow_dispatch: # disabled for the time being until documentation has been set up.
+  # push:
+  #   branches:
+  #   - main
+  # pull_request:
+  #   branches:
+  #   - main
 
 jobs:
   build-documentation:
@@ -16,10 +17,10 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.9
+      - name: Set up Python 3.13
         uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: 3.13
       - name: Python info
         shell: bash -e {0}
         run: |
@@ -30,7 +31,7 @@ jobs:
           python -m pip install --upgrade pip setuptools
           python -m pip install .[dev,publishing]
       - name: Install pandoc using apt
-        run: sudo apt install pandoc        
+        run: sudo apt install pandoc
       - name: Build documentation
         run: make coverage doctest html
         working-directory: docs

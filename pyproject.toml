@@ -34,7 +34,7 @@ dev = [
     "coverage [toml]",
     "pytest",
     "pytest-cov",
-    "ruff",
+    "ruff==0.15.*",
     "mypy",
 ]
 docs = []
@@ -45,6 +45,12 @@ Repository = "https://github.com/DaniBodor/nl2query"
 Issues = "https://github.com/DaniBodor/nl2query/issues"
 Changelog = "https://github.com/DaniBodor/nl2query/CHANGELOG.md"
 ReadTheDocs = "https://nl2query.readthedocs.io"
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+exclude = "build/.*"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
