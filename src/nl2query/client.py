@@ -4,7 +4,7 @@ from pathlib import Path
 import requests
 
 
-class DelphersClient:
+class DelpherClient:
     """HTTP client for querying Delpher API and saving results to JSON."""
 
     DELPHER_URL = "https://www.delpher.nl/nl/api/results"
@@ -25,10 +25,12 @@ class DelphersClient:
         self.results: dict = {}
 
     def search(self, query: str | list[str]) -> dict:
-        """Search for a single query term in Delpher API.
+        """Search Delpher for one or more query terms.
 
         Args:
-            query: The search term to query.
+            query: A single search term as a string, or a list of search terms.
+                When a list is provided, the terms are combined into a single
+                query string using the "+" operator.
 
         Returns:
             The API response as a dictionary.
@@ -38,10 +40,10 @@ class DelphersClient:
         try:
             response = requests.get(self.DELPHER_URL, params={"query": query}, timeout=10)
             response.raise_for_status()
-            return response.json()
+            return response.json()  # type: ignore[no-any-return] #TODO: fix return type
         except requests.exceptions.RequestException as e:
             msg = f"Error querying '{query}': {e}"
-            raise requests.HTTPError(msg) from e
+            raise type(e)(msg) from e
 
     def save_to_json(
         self,
@@ -54,7 +56,9 @@ class DelphersClient:
             output_file: Optional path to override the default output file.
             output_dir: Optional directory to override the default output directory.
         """
-        filename = Path(output_file or self.output_file).with_suffix(".json")
+        filename = Path(output_file or self.output_file)
+        if not filename.suffix:
+            filename = filename.with_suffix(".json")
         base_dir = Path(output_dir or self.output_dir)
         destination = filename if filename.is_absolute() else base_dir / filename
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -66,16 +70,33 @@ class DelphersClient:
         """Run searches for all queries and save results to JSON.
 
         Args:
-            query: List of search terms to query.
+            query: Search term or list of search terms to query.
         """
         query = self._query_list_to_string(query)
         self.results = self.search(query)
-        self.save_to_json(query)
+        self.save_to_json(output_file=query)
 
     def _query_list_to_string(self, query: str | list[str]) -> str:
-        """Convert a list of query terms to a single string for API requests."""
+        """Convert a query (string or list of terms) to a single string for API requests.
+
+        Empty or whitespace-only terms are ignored. If no valid terms remain,
+        a ValueError is raised to avoid sending an empty query to the API.
+        """
         if isinstance(query, list):
-            return "+".join(query)
+            # Filter out empty or whitespace-only terms
+            filtered_terms = [term for term in query if isinstance(term, str) and term.strip()]
+            if not filtered_terms:
+                msg = "Query list must contain at least one non-empty term."
+                raise ValueError(msg)
+            return "+".join(filtered_terms)
+
+        # Query is a single string
+        if not isinstance(query, str):
+            msg = "Query must be a string or a list of strings."
+            raise TypeError(msg)
+        if not query.strip():
+            msg = "Query string must be non-empty."
+            raise ValueError(msg)
         return query
 
 
@@ -89,5 +110,5 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    client = DelphersClient(output_file="delpher_results.json")
+    client = DelpherClient(output_file="delpher_results.json")
     client.run(args.terms)
