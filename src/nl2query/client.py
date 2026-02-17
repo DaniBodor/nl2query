@@ -1,3 +1,4 @@
+import argparse
 import json
 from pathlib import Path
 import requests
@@ -79,7 +80,14 @@ class DelphersClient:
 
 
 if __name__ == "__main__":
-    # Example usage
+    parser = argparse.ArgumentParser(description="Query Delpher API.")
+    parser.add_argument(
+        "terms",
+        nargs="*",
+        default=["watersnood", "storm"],
+        help="One or more search terms to query (defaults to watersnood storm).",
+    )
+    args = parser.parse_args()
+
     client = DelphersClient(output_file="delpher_results.json")
-    search_terms = ["watersnood", "storm"]
-    client.run(search_terms)
+    client.run(args.terms)
