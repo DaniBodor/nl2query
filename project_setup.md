@@ -11,9 +11,7 @@ checklist](https://guide.esciencecenter.nl/#/best_practices/checklist).
 
 This repository is set up with Python versions:
 
-- 3.10
-- 3.11
-- 3.12
+- 3.13
 
 Add or remove Python versions based on project requirements. See [the
 guide](https://guide.esciencecenter.nl/#/best_practices/language_guides/python) for more information about Python
@@ -62,8 +60,6 @@ help you decide which tool to use for packaging.
 ## Coding style conventions and code quality
 
 - [Relevant section in the NLeSC guide](https://guide.esciencecenter.nl/#/best_practices/language_guides/python?id=coding-style-conventions) and [README.dev.md](README.dev.md).
-
-
 
 ## Package version number
 
