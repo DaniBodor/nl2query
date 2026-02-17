@@ -47,7 +47,7 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip setuptools
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install .[rl,dev]
+          pip install .[dev]
       # mypy configs are in pyproject.toml
       - name: Check static typing
         run: mypy src tests
