@@ -3,6 +3,15 @@ import json
 from pathlib import Path
 import requests
 
+COLLECTIONS = {
+    "boeken_basis": "boeken",
+    "boeken_google": "boeken1",
+    "tijdschriften": "dts",
+    "kranten": "ddd",
+    "externe_ranten": "regio",
+    "radiobulletins": "anp",
+}
+
 
 class DelpherClient:
     """HTTP client for querying Delpher API and saving results to JSON."""
@@ -24,21 +33,33 @@ class DelpherClient:
         self.output_dir = output_dir or Path(__file__).resolve().parents[2] / "outputs"
         self.results: dict = {}
 
-    def search(self, query: str | list[str]) -> dict:
+    def search(self, query: str | list[str], collection: str = "radiobulletins") -> dict:
         """Search Delpher for one or more query terms.
 
         Args:
             query: A single search term as a string, or a list of search terms.
                 When a list is provided, the terms are combined into a single
                 query string using the "+" operator.
+            collection: Optional collection name to limit the search. Both labels
+                (e.g., "Boeken_Basis") and codes (e.g., "boeken") are accepted.
+                Defaults to radiobulletins (anp) if not specified.
 
         Returns:
             The API response as a dictionary.
         """
         query = self._query_list_to_string(query)
-
+        collection = collection.lower()
+        if collection in COLLECTIONS:
+            collection = COLLECTIONS[collection]
+        elif collection not in COLLECTIONS.values():
+            msg = f"Invalid collection: {collection}"
+            raise ValueError(msg)
         try:
-            response = requests.get(self.DELPHER_URL, params={"query": query}, timeout=10)
+            response = requests.get(
+                self.DELPHER_URL,
+                params={"query": query, "coll": collection},
+                timeout=10,
+            )
             response.raise_for_status()
             return response.json()  # type: ignore[no-any-return] #TODO: fix return type
         except requests.exceptions.RequestException as e:
@@ -66,15 +87,19 @@ class DelpherClient:
             json.dump(self.results, f, indent=2, ensure_ascii=False)
         print(f"Results saved to {destination}")  # noqa: T201
 
-    def run(self, query: str | list[str]) -> None:
+    def run(self, query: str | list[str], collection: str = "radiobulletins") -> None:
         """Run searches for all queries and save results to JSON.
 
         Args:
             query: Search term or list of search terms to query.
+            collection: Optional collection name to limit the search.
+                Defaults to radiobulletins.
         """
         query = self._query_list_to_string(query)
-        self.results = self.search(query)
-        self.save_to_json(output_file=query)
+        self.results = self.search(query=query, collection=collection)
+
+        save_name = f"{query}_{collection}.json"
+        self.save_to_json(output_file=save_name)
 
     def _query_list_to_string(self, query: str | list[str]) -> str:
         """Convert a query (string or list of terms) to a single string for API requests.
@@ -108,7 +133,17 @@ if __name__ == "__main__":
         default=["watersnood", "storm"],
         help="One or more search terms to query (defaults to watersnood storm).",
     )
+    parser.add_argument(
+        "-c",
+        "--coll",
+        default=None,
+        help=(
+            "Optional collection label or code. "
+            f"Labels: {', '.join(COLLECTIONS.keys())}. "
+            f"Codes: {', '.join(COLLECTIONS.values())}."
+        ),
+    )
     args = parser.parse_args()
 
     client = DelpherClient(output_file="delpher_results.json")
-    client.run(args.terms)
+    client.run(args.terms.lower(), collection=args.coll.lower())
