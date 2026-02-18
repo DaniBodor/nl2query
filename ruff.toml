@@ -1,4 +1,4 @@
-line-length = 120
+line-length = 100
 output-format = "concise"
 extend-exclude = ["docs"]
 
@@ -34,4 +34,10 @@ pydocstyle.convention = "google"
 [lint.isort]
 known-first-party = ["nl2query"]
 force-single-line = true
-no-lines-before = ["future","standard-library","third-party","first-party","local-folder"]
+no-lines-before = [
+    "future",
+    "standard-library",
+    "third-party",
+    "first-party",
+    "local-folder",
+]
