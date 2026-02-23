@@ -3,17 +3,11 @@ output-format = "concise"
 extend-exclude = ["docs"]
 
 [lint]
-# Allow unused variables when underscore-prefixed.
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
-
-# Enable Pyflakes `E` and `F` codes by default.
 select = ["ALL"]
 ignore = [
     "ANN204", # Missing return type annotation for special (dunder) method
-    "FBT",    # Using boolean function arguments
-    "TD",     # TODOs
-    "FIX001", # Resolve FIXMEs
-    "FIX002", # Resolve TODOs
+    "FIX",    # Disallows TODO/FIXME/XXX comments
+    "TD",     # Forces addition information on TODOs
     "B028",   # No explicit `stacklevel` keyword argument found in warning
     # No docstrings required in the following cases
     "D100", # Missing module docstring
@@ -22,6 +16,19 @@ ignore = [
     "D107", # Missing docstring in `__init__`
 ]
 pydocstyle.convention = "google"
+unfixable = [
+    "F401",   # unused imports (should not disappear while editing)
+    "B905",   # zip-without-explicit-strict
+    "T201",   # print-statements
+    "RUF100", # remove unused noqa (preferable to control when this happens?)
+]
+extend-safe-fixes = [
+    "D415",   # First line should end with a period, question mark, or exclamation point
+    "TC",     # Format type checking only imports
+    "EM",     # Exception message variables
+    "RUF013", # Implicit Optional
+    "B006",   # Mutable default argument
+]
 
 [lint.per-file-ignores]
 # Tests can ignore a few extra rules
@@ -34,10 +41,3 @@ pydocstyle.convention = "google"
 [lint.isort]
 known-first-party = ["nl2query"]
 force-single-line = true
-no-lines-before = [
-    "future",
-    "standard-library",
-    "third-party",
-    "first-party",
-    "local-folder",
-]
