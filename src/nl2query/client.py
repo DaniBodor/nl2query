@@ -1,8 +1,10 @@
 import argparse
 import json
 from pathlib import Path
+
 import requests
 
+# TODO: can these be read from delpher rather than hardcoding them?
 COLLECTIONS = {
     "boeken_basis": "boeken",
     "boeken_google": "boeken1",
@@ -33,16 +35,18 @@ class DelpherClient:
         self.output_dir = output_dir or Path(__file__).resolve().parents[2] / "outputs"
         self.results: dict = {}
 
+    # TODO: create helper function to search through multiple collections and combine results
     def search(self, query: str | list[str], collection: str = "radiobulletins") -> dict:
         """Search Delpher for one or more query terms.
 
         Args:
             query: A single search term as a string, or a list of search terms.
-                When a list is provided, the terms are combined into a single
-                query string using the "+" operator.
-            collection: Optional collection name to limit the search. Both labels
-                (e.g., "Boeken_Basis") and codes (e.g., "boeken") are accepted.
-                Defaults to radiobulletins (anp) if not specified.
+                When a list is provided, the terms are combined into a single query string using the
+                "+" operator.
+            collection: Delpher collection to search through. This accepts either the label used on
+                the Delpher website (e.g., "boeken_basis") or the corresponding code (e.g.,
+                "boeken"). Note that this it is not possible to search across multiple collections
+                in a single query. If no collection is specified, it defaults to "radiobulletins".
 
         Returns:
             The API response as a dictionary.
@@ -92,8 +96,7 @@ class DelpherClient:
 
         Args:
             query: Search term or list of search terms to query.
-            collection: Optional collection name to limit the search.
-                Defaults to radiobulletins.
+            collection: Delpher collection to search through. Defaults to radiobulletins.
         """
         query = self._query_list_to_string(query)
         self.results = self.search(query=query, collection=collection)
