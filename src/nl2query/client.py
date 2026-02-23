@@ -1,22 +1,20 @@
 import argparse
 import json
 from pathlib import Path
+from typing import Any
+
 import requests
 
-COLLECTIONS = {
-    "boeken_basis": "boeken",
-    "boeken_google": "boeken1",
-    "tijdschriften": "dts",
-    "kranten": "ddd",
-    "externe_ranten": "regio",
-    "radiobulletins": "anp",
-}
+from nl2query.collections import COLLECTIONS
+from nl2query.collections import COLLECTIONS_BY_CODE
+from nl2query.collections import CollectionConfig
 
 
 class DelpherClient:
     """HTTP client for querying Delpher API and saving results to JSON."""
 
     DELPHER_URL = "https://www.delpher.nl/nl/api/results"
+    DEFAULT_COLLECTION = "radiobulletins"
 
     def __init__(
         self,
@@ -33,7 +31,12 @@ class DelpherClient:
         self.output_dir = output_dir or Path(__file__).resolve().parents[2] / "outputs"
         self.results: dict = {}
 
-    def search(self, query: str | list[str], collection: str = "radiobulletins") -> dict:
+    def search(
+        self,
+        query: str | list[str],
+        collection: str = DEFAULT_COLLECTION,
+        facets: dict[str, str | list[str]] | None = None,
+    ) -> dict:
         """Search Delpher for one or more query terms.
 
         Args:
@@ -43,21 +46,23 @@ class DelpherClient:
             collection: Optional collection name to limit the search. Both labels
                 (e.g., "Boeken_Basis") and codes (e.g., "boeken") are accepted.
                 Defaults to radiobulletins (anp) if not specified.
+            facets: Optional facet filters to include in the request.
+                Example: {"type": "advertentie"} translates to
+                facets[type][]=advertentie.
 
         Returns:
             The API response as a dictionary.
         """
         query = self._query_list_to_string(query)
-        collection = collection.lower()
-        if collection in COLLECTIONS:
-            collection = COLLECTIONS[collection]
-        elif collection not in COLLECTIONS.values():
-            msg = f"Invalid collection: {collection}"
-            raise ValueError(msg)
+        collection_config = self._resolve_collection(collection)
         try:
+            request_params: dict[str, Any] = {"query": query, "coll": collection_config.code}
+            request_params.update(
+                self._build_facet_params(facets, allowed_facets=collection_config.allowed_facets),
+            )
             response = requests.get(
                 self.DELPHER_URL,
-                params={"query": query, "coll": collection},
+                params=request_params,
                 timeout=10,
             )
             response.raise_for_status()
@@ -65,6 +70,73 @@ class DelpherClient:
         except requests.exceptions.RequestException as e:
             msg = f"Error querying '{query}': {e}"
             raise type(e)(msg) from e
+
+    def _build_facet_params(
+        self,
+        facets: dict[str, str | list[str]] | None,
+        allowed_facets: frozenset[str] | None = None,
+    ) -> dict[str, str | list[str]]:
+        """Convert facet filters into Delpher API request params.
+
+        Delpher expects facet filters as keys with the format
+        ``facets[<facet_name>][]``.
+
+        Example:
+            {"type": "advertentie"} -> {"facets[type][]": "advertentie"}
+        """
+        if not facets:
+            return {}
+
+        facet_params: dict[str, str | list[str]] = {}
+        for facet_name, facet_value in facets.items():
+            normalized_name = facet_name.strip()
+            if not normalized_name:
+                msg = "Facet names must be non-empty strings."
+                raise ValueError(msg)
+            if allowed_facets is not None and normalized_name not in allowed_facets:
+                msg = (
+                    f"Facet '{normalized_name}' is not allowed for this collection. "
+                    f"Allowed facets: {', '.join(sorted(allowed_facets))}."
+                )
+                raise ValueError(msg)
+
+            if isinstance(facet_value, str):
+                if not facet_value.strip():
+                    msg = f"Facet '{normalized_name}' must be non-empty."
+                    raise ValueError(msg)
+                facet_params[f"facets[{normalized_name}][]"] = facet_value
+                continue
+
+            if isinstance(facet_value, list):
+                filtered_values = [
+                    value for value in facet_value if isinstance(value, str) and value.strip()
+                ]
+                if not filtered_values:
+                    msg = f"Facet '{normalized_name}' must contain at least one non-empty value."
+                    raise ValueError(msg)
+                facet_params[f"facets[{normalized_name}][]"] = filtered_values
+                continue
+
+            msg = f"Facet '{normalized_name}' must be a string or a list of strings."
+            raise TypeError(msg)
+
+        return facet_params
+
+    def _resolve_collection(self, collection: str | None) -> CollectionConfig:
+        """Resolve a collection label or code to a collection configuration."""
+        normalized_collection = (collection or self.DEFAULT_COLLECTION).strip().lower()
+        if not normalized_collection:
+            msg = "Collection must be non-empty when provided."
+            raise ValueError(msg)
+
+        if normalized_collection in COLLECTIONS:
+            return COLLECTIONS[normalized_collection]
+
+        if normalized_collection in COLLECTIONS_BY_CODE:
+            return COLLECTIONS_BY_CODE[normalized_collection]
+
+        msg = f"Invalid collection: {collection}"
+        raise ValueError(msg)
 
     def save_to_json(
         self,
@@ -87,7 +159,7 @@ class DelpherClient:
             json.dump(self.results, f, indent=2, ensure_ascii=False)
         print(f"Results saved to {destination}")  # noqa: T201
 
-    def run(self, query: str | list[str], collection: str = "radiobulletins") -> None:
+    def run(self, query: str | list[str], collection: str = DEFAULT_COLLECTION) -> None:
         """Run searches for all queries and save results to JSON.
 
         Args:
@@ -96,9 +168,10 @@ class DelpherClient:
                 Defaults to radiobulletins.
         """
         query = self._query_list_to_string(query)
-        self.results = self.search(query=query, collection=collection)
+        collection_config = self._resolve_collection(collection)
+        self.results = self.search(query=query, collection=collection_config.code)
 
-        save_name = f"{query}_{collection}.json"
+        save_name = f"{query}_{collection_config.code}.json"
         self.save_to_json(output_file=save_name)
 
     def _query_list_to_string(self, query: str | list[str]) -> str:
@@ -136,14 +209,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "-c",
         "--coll",
-        default=None,
+        default=DelpherClient.DEFAULT_COLLECTION,
         help=(
             "Optional collection label or code. "
             f"Labels: {', '.join(COLLECTIONS.keys())}. "
-            f"Codes: {', '.join(COLLECTIONS.values())}."
+            f"Codes: {', '.join(COLLECTIONS_BY_CODE.keys())}."
         ),
     )
     args = parser.parse_args()
 
     client = DelpherClient(output_file="delpher_results.json")
-    client.run(args.terms.lower(), collection=args.coll.lower())
+    client.run(args.terms, collection=args.coll)
