@@ -51,7 +51,12 @@ class DelpherClient:
         Returns:
             The API response as a dictionary.
         """
-        query = self._query_list_to_string(query)
+        query = self._query_parser(query)
+
+        if not isinstance(collection, str):
+            msg = "Collection must be a string."
+            raise TypeError(msg)
+
         collection = collection.lower()
         if collection in COLLECTIONS:
             collection = COLLECTIONS[collection]
@@ -98,21 +103,23 @@ class DelpherClient:
             query: Search term or list of search terms to query.
             collection: Delpher collection to search through. Defaults to radiobulletins.
         """
-        query = self._query_list_to_string(query)
+        query = self._query_parser(query)
         self.results = self.search(query=query, collection=collection)
 
         save_name = f"{query}_{collection}.json"
         self.save_to_json(output_file=save_name)
 
-    def _query_list_to_string(self, query: str | list[str]) -> str:
-        """Convert a query (string or list of terms) to a single string for API requests.
+    def _query_parser(self, query: str | list[str]) -> str:
+        """Convert a query (string or list of terms) to a single lowercase string for API requests.
 
         Empty or whitespace-only terms are ignored. If no valid terms remain,
         a ValueError is raised to avoid sending an empty query to the API.
         """
         if isinstance(query, list):
             # Filter out empty or whitespace-only terms
-            filtered_terms = [term for term in query if isinstance(term, str) and term.strip()]
+            filtered_terms = [
+                term.lower() for term in query if isinstance(term, str) and term.strip()
+            ]
             if not filtered_terms:
                 msg = "Query list must contain at least one non-empty term."
                 raise ValueError(msg)
@@ -125,7 +132,7 @@ class DelpherClient:
         if not query.strip():
             msg = "Query string must be non-empty."
             raise ValueError(msg)
-        return query
+        return query.lower()
 
 
 if __name__ == "__main__":
@@ -139,7 +146,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-c",
         "--coll",
-        default=None,
+        default="radiobulletins",
         help=(
             "Optional collection label or code. "
             f"Labels: {', '.join(COLLECTIONS.keys())}. "
@@ -149,4 +156,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     client = DelpherClient(output_file="delpher_results.json")
-    client.run(args.terms.lower(), collection=args.coll.lower())
+    client.run(args.terms, collection=args.coll)
