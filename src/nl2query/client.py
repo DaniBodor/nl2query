@@ -10,7 +10,7 @@ COLLECTIONS = {
     "boeken_google": "boeken1",
     "tijdschriften": "dts",
     "kranten": "ddd",
-    "externe_ranten": "regio",
+    "externe_kranten": "regio",
     "radiobulletins": "anp",
 }
 
@@ -45,7 +45,7 @@ class DelpherClient:
                 "+" operator.
             collection: Delpher collection to search through. This accepts either the label used on
                 the Delpher website (e.g., "boeken_basis") or the corresponding code (e.g.,
-                "boeken"). Note that this it is not possible to search across multiple collections
+                "boeken"). Note that it is not possible to search across multiple collections
                 in a single query. If no collection is specified, it defaults to "radiobulletins".
 
         Returns:
