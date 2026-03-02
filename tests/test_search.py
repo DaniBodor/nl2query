@@ -41,3 +41,15 @@ def test_multiple_search_terms():
 
     gibberish_results = Delpher().search(query=[GIBBERSH, "groente"])
     assert gibberish_results["numberOfRecords"] == 0
+
+
+def test_query_preparation():
+    assert Delpher()._prepare_request_param("  Groente  ") == "groente"  # noqa: SLF001
+    assert Delpher()._prepare_request_param(["  Groente  ", " Fruit "]) == "groente+fruit"  # noqa: SLF001
+    assert Delpher()._prepare_request_param("GROENTE") == "groente"  # noqa: SLF001
+
+    results_lower = Delpher().search(query="groente")
+    results_caps = Delpher().search(query="GROENTE")
+    results_mixed = Delpher().search(query="GrOeNtE")
+    results_spaced = Delpher().search(query="  Groente  ")
+    assert results_lower == results_caps == results_mixed == results_spaced
