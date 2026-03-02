@@ -1,3 +1,5 @@
+import pytest
+
 from nl2query.client import DelpherClient as Delpher
 
 TEST_QUERIES = ["groente", "fruit", "watersnood"]
@@ -53,3 +55,15 @@ def test_query_preparation():
     results_mixed = Delpher().search(query="GrOeNtE")
     results_spaced = Delpher().search(query="  Groente  ")
     assert results_lower == results_caps == results_mixed == results_spaced
+
+
+def test_illegal_search_terms():
+    empty_searches = ["", "   ", ["", "   "]]
+    for term in empty_searches:
+        with pytest.raises(ValueError):
+            Delpher().search(query=term)
+
+    illegal_searches = [42, 3.14, ["valid", 42], {"term": "value"}, True, None]
+    for term in illegal_searches:
+        with pytest.raises(TypeError):
+            Delpher().search(query=term)
