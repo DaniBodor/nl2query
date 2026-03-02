@@ -67,3 +67,47 @@ def test_illegal_search_terms():
     for term in illegal_searches:
         with pytest.raises(TypeError):
             Delpher().search(query=term)
+
+
+def test_search_phrase():
+    pytest.skip("Phrase search not yet implemented.")
+
+
+def test_search_with_operators():
+    pytest.skip("Search operators not yet implemented.")
+
+
+def test_search_with_special_characters():
+    pytest.skip("Special character handling not yet implemented.")
+    # What happens with diacritics, punctuation, etc?
+
+
+def test_search_with_wildcards():
+    pytest.skip("Wildcard search not yet implemented.")
+    # This test may be fused with above (or operators/special characters/wildcards may all be fused
+    # into a single test).
+
+
+def test_within_collection(): ...
+
+
+def test_invalid_collection(): ...
+
+
+# Non-string collection, invalid collection name, empty collection name
+# also include list of collections while these are not yet implemented
+
+
+def test_collection_features():
+    """Checks that records and facets contain expected fields, depending on the collection."""
+
+
+def test_within_multiple_collections():
+    pytest.skip("Multiple collection search not yet implemented.")
+
+
+def test_filter_results():
+    pytest.skip("Result filtering not yet implemented.")
+
+
+def test_save_search_results(): ...
