@@ -23,3 +23,21 @@ def test_single_search_term():
 
     gibberish_results = Delpher().search(query=GIBBERSH)
     assert gibberish_results["numberOfRecords"] == 0
+
+
+def test_multiple_search_terms():
+    results_list = Delpher().search(query=TEST_QUERIES)
+    results_plus = Delpher().search(query="+".join(TEST_QUERIES))
+    results_space = Delpher().search(query=" ".join(TEST_QUERIES))
+    assert results_list == results_plus == results_space
+
+    for query in TEST_QUERIES:
+        results_single = Delpher().search(query=query)
+        n_broad_search = results_single["numberOfRecords"]
+        n_specific_search = results_single["numberOfRecords"]
+        assert n_broad_search <= n_specific_search, (
+            "More specific search retrieved larger number of records than broader search."
+        )
+
+    gibberish_results = Delpher().search(query=[GIBBERSH, "groente"])
+    assert gibberish_results["numberOfRecords"] == 0
