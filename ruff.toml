@@ -7,8 +7,7 @@ select = ["ALL"]
 ignore = [
     "ANN204", # Missing return type annotation for special (dunder) method
     "FIX",    # Disallows TODO/FIXME/XXX comments
-    "TD",     # Forces addition information on TODOs
-    "B028",   # No explicit `stacklevel` keyword argument found in warning
+    "TD",     # Forces additional information for TODOs
     # No docstrings required in the following cases
     "D100", # Missing module docstring
     "D104", # Missing public package docstring
@@ -17,10 +16,10 @@ ignore = [
 ]
 pydocstyle.convention = "google"
 unfixable = [
-    "F401",   # unused imports (should not disappear while editing)
+    "F401",   # unused imports
     "B905",   # zip-without-explicit-strict
     "T201",   # print-statements
-    "RUF100", # remove unused noqa (preferable to control when this happens?)
+    "RUF100", # remove unused noqa
 ]
 extend-safe-fixes = [
     "D415",   # First line should end with a period, question mark, or exclamation point
@@ -31,11 +30,11 @@ extend-safe-fixes = [
 ]
 
 [lint.per-file-ignores]
-# Tests can ignore a few extra rules
 "tests/**.py" = [
     "ANN201", # Missing return type annotation for public function
     "PT011",  # Missing `match` parameter in `pytest.raises()`
     "S101",   # Use of assert is detected
+    "D103",   # Missing docstring in public function
 ]
 
 [lint.isort]
