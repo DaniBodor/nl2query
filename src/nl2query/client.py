@@ -122,6 +122,11 @@ class DelpherClient:
         Empty or whitespace-only terms are ignored. If no valid terms remain,
         a ValueError is raised to avoid sending an empty query to the API.
         """
+        # TODO: make this generic for any query parameter, not just search terms.
+        # lists of search terms vs collections need to be treated differently
+        # for search terms, concatenate them into a single query string (e.g., "term1+term2")
+        # for collections, raise an error for now, run a loop once implemented
+        # right now this helper is only geared at the search terms case, but both are fed through
         if isinstance(param, list):
             if not all(isinstance(term, str) for term in param):
                 msg = "All items in query list must be strings."
