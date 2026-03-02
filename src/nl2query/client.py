@@ -41,8 +41,8 @@ class DelpherClient:
 
         Args:
             query: A single search term as a string, or a list of search terms.
-                When a list is provided, the terms are combined into a single query string using the
-                "+" operator.
+                When a list is provided, the terms are concatenated into a single query string (i.e.
+                "term1+term2+term3").
             collection: Delpher collection to search through. This accepts either the label used on
                 the Delpher website (e.g., "boeken_basis") or the corresponding code (e.g.,
                 "boeken"). Note that it is not possible to search across multiple collections
@@ -51,22 +51,30 @@ class DelpherClient:
         Returns:
             The API response as a dictionary.
         """
-        query = self._query_parser(query)
-
-        if not isinstance(collection, str):
-            msg = "Collection must be a string."
+        query = self._prepare_request_param(query)
+        if isinstance(collection, list):
+            msg = (
+                "It is not possible to search across multiple collections at once.\n"
+                "Please specify a single collection."
+            )
             raise TypeError(msg)
+        collection = self._prepare_request_param(collection)
 
-        collection = collection.lower()
         if collection in COLLECTIONS:
-            collection = COLLECTIONS[collection]
-        elif collection not in COLLECTIONS.values():
-            msg = f"Invalid collection: {collection}"
+            api_collection = COLLECTIONS[collection]
+        elif collection in COLLECTIONS.values():
+            api_collection = collection
+        else:
+            msg = (
+                f"Collection not found: {collection}.\n"
+                f"Please choose from: {', '.join(COLLECTIONS.values())}."
+            )
             raise ValueError(msg)
+
         try:
             response = requests.get(
                 self.DELPHER_URL,
-                params={"query": query, "coll": collection},
+                params={"query": query, "coll": api_collection},
                 timeout=10,
             )
             response.raise_for_status()
@@ -103,36 +111,36 @@ class DelpherClient:
             query: Search term or list of search terms to query.
             collection: Delpher collection to search through. Defaults to radiobulletins.
         """
-        query = self._query_parser(query)
         self.results = self.search(query=query, collection=collection)
 
         save_name = f"{query}_{collection}.json"
         self.save_to_json(output_file=save_name)
 
-    def _query_parser(self, query: str | list[str]) -> str:
-        """Convert a query (string or list of terms) to a single lowercase string for API requests.
+    def _prepare_request_param(self, param: str | list[str]) -> str:
+        """Check that param is a string or list of strings and convert to stripped lowercase string.
 
         Empty or whitespace-only terms are ignored. If no valid terms remain,
         a ValueError is raised to avoid sending an empty query to the API.
         """
-        if isinstance(query, list):
-            # Filter out empty or whitespace-only terms
-            filtered_terms = [
-                term.lower() for term in query if isinstance(term, str) and term.strip()
-            ]
+        if isinstance(param, list):
+            if not all(isinstance(term, str) for term in param):
+                msg = "All items in query list must be strings."
+                raise TypeError(msg)
+            filtered_terms = [term.lower() for term in param if term.strip()]
             if not filtered_terms:
-                msg = "Query list must contain at least one non-empty term."
+                msg = "Search parameter cannot be empty."
                 raise ValueError(msg)
             return "+".join(filtered_terms)
 
-        # Query is a single string
-        if not isinstance(query, str):
+        if not isinstance(param, str):
             msg = "Query must be a string or a list of strings."
             raise TypeError(msg)
-        if not query.strip():
-            msg = "Query string must be non-empty."
+
+        if not param.strip():
+            msg = "Search parameter cannot be empty."
             raise ValueError(msg)
-        return query.lower()
+
+        return param.lower().strip()
 
 
 if __name__ == "__main__":
