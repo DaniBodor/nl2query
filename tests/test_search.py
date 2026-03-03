@@ -70,7 +70,14 @@ def test_illegal_search_terms():
 
 
 def test_search_phrase():
-    pytest.skip("Phrase search not yet implemented.")
+    phrase = "groente en fruit"
+    results_phrase = Delpher().search(query=f'"{phrase}"')
+    results_words = Delpher().search(query=phrase)
+    assert results_phrase["numberOfRecords"] > 0, "Phrase search retrieved no records."
+    assert results_phrase != results_words, "Phrase search retrieved same records as word search."
+    assert results_phrase["numberOfRecords"] <= results_words["numberOfRecords"], (
+        "Phrase search retrieved more records than word search."
+    )
 
 
 def test_search_with_operators():
