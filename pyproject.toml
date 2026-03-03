@@ -49,9 +49,11 @@ ReadTheDocs = "https://nl2query.readthedocs.io"
 
 [tool.mypy]
 python_version = "3.13"
+mypy_path = ["src"]
+explicit_package_bases = true
+files = ["src", "tests"]
 warn_return_any = true
 warn_unused_configs = true
-exclude = "build/.*"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

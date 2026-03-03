@@ -67,11 +67,12 @@ class DelpherClient:
         else:
             msg = (
                 f"Collection not found: {collection}.\n"
-                f"Please choose from: {', '.join(COLLECTIONS.values())}."
+                f"Please choose from: {', '.join(COLLECTIONS)}."
             )
             raise ValueError(msg)
 
         try:
+            # TODO: number of results to retrieve using "maxperpage" param
             response = requests.get(
                 self.DELPHER_URL,
                 params={"query": query, "coll": api_collection},
@@ -131,7 +132,7 @@ class DelpherClient:
             if not all(isinstance(term, str) for term in param):
                 msg = "All items in query list must be strings."
                 raise TypeError(msg)
-            filtered_terms = [term.lower() for term in param if term.strip()]
+            filtered_terms = [term.lower().strip() for term in param if term.strip()]
             if not filtered_terms:
                 msg = "Search parameter cannot be empty."
                 raise ValueError(msg)
@@ -153,8 +154,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "terms",
         nargs="*",
-        default=["watersnood", "storm"],
-        help="One or more search terms to query (defaults to watersnood storm).",
+        default=["groente", "fruit"],
+        help="One or more search terms to query (defaults to groente fruit).",
     )
     parser.add_argument(
         "-c",
